@@ -1,19 +1,46 @@
 {
-    "name": "ericnorris/amazon-s3-php",
+    "name": "biohzrdmx/amazon-s3-php",
     "description": "A lightweight and fast S3 client for PHP.",
+    "version": "2.0",
+    "type": "library",
     "keywords": ["amazon", "aws", "s3"],
     "license": "MIT",
     "authors": [
         {
             "name": "Eric Norris",
             "email": "erictnorris@gmail.com"
+        },
+        {
+            "name": "biohzrdmx",
+            "email": "hi@biohzrdmx.me",
+            "homepage": "https://biohzrdmx.me"
         }
     ],
     "support": {
-	"source": "https://github.com/ericnorris/amazon-s3-php",
-	"issues": "https://github.com/ericnorris/amazon-s3-php/issues"
+        "source": "https://github.com/biohzrdmx/amazon-s3-php",
+        "issues": "https://github.com/biohzrdmx/amazon-s3-php/issues"
+    },
+    "require": {
+        "php": ">=7.4",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "~0.12.80",
+        "phpunit/phpunit": "^9",
+        "pcov/clobber": "^2.0"
     },
     "autoload": {
-	"files": ["src/S3.php"]
-    }
+        "psr-4": { "S3\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "S3\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "phpstan analyse --configuration phpstan.neon --level 7 --error-format=json --memory-limit=1G --no-interaction --no-progress src > tests/output/phpstan.json",
+        "coverage": "phpunit --coverage-text --coverage-filter src/",
+        "test": "phpunit tests"
+    },
+    "minimum-stability": "stable"
 }

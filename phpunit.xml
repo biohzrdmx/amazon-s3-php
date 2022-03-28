@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit colors="true" cacheResultFile="tests/output/.phpunit.result.cache">
+    <testsuites>
+        <testsuite name="Amazon S3 PHP Test Suite">
+            <directory>./tests/</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="AWS_ACCESS_KEY" value="your_aws_access_key" force="true" />
+        <env name="AWS_SECRET_KEY" value="your_aws_secret_key" force="true" />
+        <env name="AWS_BUCKET" value="your_aws_bucket" force="true" />
+    </php>
+    <logging>
+        <testdoxHtml outputFile="tests/output/phpunit.html"/>
+    </logging>
+    <coverage cacheDirectory="/tests/output">
+        <include>
+            <directory suffix=".php">./src/</directory>
+        </include>
+    </coverage>
+</phpunit>
