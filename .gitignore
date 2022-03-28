@@ -1,1 +1,9 @@
 /vendor/
+# Composer related
+composer.lock
+# Thumbnails and caches
+.DS_Store
+Thumbs.db
+# PHPUnit related
+/phpunit.xml
+.phpunit.result.cache
