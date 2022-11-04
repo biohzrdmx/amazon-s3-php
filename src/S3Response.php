@@ -61,7 +61,7 @@ class S3Response {
 	 * @return mixed
 	 */
 	public function __curlHeaderFunction($ch, $data) {
-		$header = explode(':', $data);
+		$header = explode(':', $data, 2);
 
 		if (count($header) == 2) {
 			list($key, $value) = $header;

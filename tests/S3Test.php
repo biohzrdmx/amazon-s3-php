@@ -43,9 +43,9 @@ class S3Test extends TestCase {
 	 * Setup tests
 	 */
 	protected function setUp(): void {
-		$this->access_key = $_ENV['AWS_ACCESS_KEY'] ?? '';
-		$this->secret_key = $_ENV['AWS_SECRET_KEY'] ?? '';
-		$this->bucket = $_ENV['AWS_BUCKET'] ?? '';
+		$this->access_key = getenv('AWS_ACCESS_KEY') ?? '';
+		$this->secret_key = getenv('AWS_SECRET_KEY') ?? '';
+		$this->bucket = getenv('AWS_BUCKET') ?? '';
 		$this->hash = sha1($this->contents);
 	}
 
