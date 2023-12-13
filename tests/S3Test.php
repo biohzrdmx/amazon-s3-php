@@ -40,12 +40,19 @@ class S3Test extends TestCase {
 	protected $bucket = '';
 
 	/**
+	 * Endpoint
+	 * @var string
+	 */
+	protected $endpoint = '';
+
+	/**
 	 * Setup tests
 	 */
 	protected function setUp(): void {
-		$this->access_key = getenv('AWS_ACCESS_KEY') ?? '';
+		$this->access_key =  getenv('AWS_ACCESS_KEY') ?? '';
 		$this->secret_key = getenv('AWS_SECRET_KEY') ?? '';
 		$this->bucket = getenv('AWS_BUCKET') ?? '';
+		$this->endpoint = getenv('AWS_ENDPOINT') ?? '';
 		$this->hash = sha1($this->contents);
 	}
 
@@ -57,7 +64,7 @@ class S3Test extends TestCase {
 			'Content-Type' => 'text/plain',
 			'x-amz-acl' => 'public-read'
 		];
-		$s3 = new S3($this->access_key, $this->secret_key);
+		$s3 = new S3($this->access_key, $this->secret_key, $this->endpoint);
 		$response = $s3->putObject($this->bucket, 'amazon-s3-test.txt', $this->contents, $headers);
 		$this->assertInstanceOf(S3Response::class, $response);
 		$this->assertEquals(200, $response->code);
@@ -67,7 +74,7 @@ class S3Test extends TestCase {
 	 * Get object info
 	 */
 	public function testGetObjectInfo() {
-		$s3 = new S3($this->access_key, $this->secret_key);
+		$s3 = new S3($this->access_key, $this->secret_key, $this->endpoint);
 		$response = $s3->getObjectInfo($this->bucket, 'amazon-s3-test.txt');
 		$this->assertInstanceOf(S3Response::class, $response);
 		$this->assertEquals(200, $response->code);
@@ -77,7 +84,7 @@ class S3Test extends TestCase {
 	 * Retrieve an object
 	 */
 	public function testGetObject() {
-		$s3 = new S3($this->access_key, $this->secret_key);
+		$s3 = new S3($this->access_key, $this->secret_key, $this->endpoint);
 		$response = $s3->getObject($this->bucket, 'amazon-s3-test.txt');
 		$this->assertInstanceOf(S3Response::class, $response);
 		$this->assertEquals(200, $response->code);
@@ -88,7 +95,7 @@ class S3Test extends TestCase {
 	 * Get a bucket
 	 */
 	public function testGetBucket() {
-		$s3 = new S3($this->access_key, $this->secret_key);
+		$s3 = new S3($this->access_key, $this->secret_key, $this->endpoint);
 		$response = $s3->getBucket($this->bucket);
 		$this->assertInstanceOf(S3Response::class, $response);
 		$this->assertEquals(200, $response->code);
@@ -98,7 +105,7 @@ class S3Test extends TestCase {
 	 * Delete an object
 	 */
 	public function testDeleteObject() {
-		$s3 = new S3($this->access_key, $this->secret_key);
+		$s3 = new S3($this->access_key, $this->secret_key, $this->endpoint);
 		$response = $s3->deleteObject($this->bucket, 'amazon-s3-test.txt');
 		$this->assertInstanceOf(S3Response::class, $response);
 		$this->assertEquals(204, $response->code);

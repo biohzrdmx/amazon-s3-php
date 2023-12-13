@@ -99,7 +99,7 @@ class S3 {
 			->setHeaders($headers)
 			->useMultiCurl($this->multi_curl)
 			->useCurlOpts($this->curl_opts)
-			->sign($this->access_key, $this->secret_key);
+			->sign($this->access_key, $this->secret_key, $this->endpoint);
 
 		return $request->getResponse();
 	}
@@ -118,7 +118,7 @@ class S3 {
 			->setHeaders($headers)
 			->useMultiCurl($this->multi_curl)
 			->useCurlOpts($this->curl_opts)
-			->sign($this->access_key, $this->secret_key);
+			->sign($this->access_key, $this->secret_key, $this->endpoint);
 
 		return $request->getResponse();
 	}
@@ -138,7 +138,7 @@ class S3 {
 			->setHeaders($headers)
 			->useMultiCurl($this->multi_curl)
 			->useCurlOpts($this->curl_opts)
-			->sign($this->access_key, $this->secret_key);
+			->sign($this->access_key, $this->secret_key, $this->endpoint);
 
 		if (is_resource($resource)) {
 			$request->saveToResource($resource);
@@ -161,7 +161,7 @@ class S3 {
 			->setHeaders($headers)
 			->useMultiCurl($this->multi_curl)
 			->useCurlOpts($this->curl_opts)
-			->sign($this->access_key, $this->secret_key);
+			->sign($this->access_key, $this->secret_key, $this->endpoint);
 
 		return $request->getResponse();
 	}
@@ -177,7 +177,7 @@ class S3 {
 			->setHeaders($headers)
 			->useMultiCurl($this->multi_curl)
 			->useCurlOpts($this->curl_opts)
-			->sign($this->access_key, $this->secret_key);
+			->sign($this->access_key, $this->secret_key, $this->endpoint);
 
 		$response = $request->getResponse();
 

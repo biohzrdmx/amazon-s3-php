@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace S3;
 
+use DateTime;
+
 use S3\S3Response;
 
 class S3Request {
@@ -91,18 +93,22 @@ class S3Request {
 			$hash_ctx = hash_init('md5');
 			$length = hash_update_stream($hash_ctx, $file);
 			$md5 = hash_final($hash_ctx, true);
-
 			rewind($file);
-
+			$hash_ctx = hash_init('sha256');
+			$length = hash_update_stream($hash_ctx, $file);
+			$sha256 = hash_final($hash_ctx);
+			rewind($file);
 			curl_setopt($this->curl, CURLOPT_PUT, true);
 			curl_setopt($this->curl, CURLOPT_INFILE, $file);
 			curl_setopt($this->curl, CURLOPT_INFILESIZE, $length);
 		} else {
 			curl_setopt($this->curl, CURLOPT_POSTFIELDS, $file);
 			$md5 = md5($file, true);
+			$sha256 = hash('sha256', $file);
 		}
 
 		$this->headers['Content-MD5'] = base64_encode($md5);
+		$this->headers['x-amz-content-sha256'] = $sha256;
 
 		return $this;
 	}
@@ -121,30 +127,109 @@ class S3Request {
 	 * Sign payload
 	 * @param  string $access_key Access key
 	 * @param  string $secret_key Secret key
+	 * @param  string $endpoint   Endpoint
 	 * @return $this
 	 */
-	public function sign(string $access_key, string $secret_key) {
-		$canonical_amz_headers = $this->getCanonicalAmzHeaders();
+	public function sign(string $access_key, string $secret_key, string $endpoint) {
+		# Prepare date, parse region name from the endpoint and set service name
+		$date = new DateTime( 'UTC' );
+		$service = 's3';
+		$region = $this->getRegion($endpoint);
 
-		$string_to_sign = '';
-		$string_to_sign .= "{$this->action}\n";
-		$string_to_sign .= "{$this->headers['Content-MD5']}\n";
-		$string_to_sign .= "{$this->headers['Content-Type']}\n";
-		$string_to_sign .= "{$this->headers['Date']}\n";
+		# Define algorithm
+		$algorithm = 'AWS4-HMAC-SHA256';
+		$algorithm_name = 'sha256';
 
-		if (!empty($canonical_amz_headers)) {
-			$string_to_sign .= implode("\n", $canonical_amz_headers) . "\n";
+		# Remove empty headers
+		$this->headers = array_filter($this->headers);
+
+		# Add extra headers
+		$this->headers['host'] = $endpoint;
+		$this->headers['x-amz-date'] = $date->format('Ymd\THis\Z');
+		# Check content signature
+		if (! isset( $this->headers['x-amz-content-sha256'] ) ) {
+			# No content, add empty content signature
+			$this->headers['x-amz-content-sha256'] = hash($algorithm_name, '');
 		}
 
-		$string_to_sign .= "/{$this->uri}";
+		# Part 1: Canonical request
+		$canonical_request = [];
+		# Method
+		$canonical_request[] = $this->action;
+		# URI
+		$canonical_request[] = '/' . trim($this->uri, '/');
+		# Query string
+		$canonical_request[] = '';
+		# Headers
+		$headers = [];
+		foreach ( $this->headers as $key => $value ) {
+			$headers[ strtolower( $key ) ] = trim( $value );
+		}
+		uksort($headers, 'strcmp');
+		foreach ( $headers as $key => $value ) {
+			$canonical_request[] = $key . ':' . $value;
+		}
+		# Blank line
+		$canonical_request[] = '';
+		# Signed headers
+		$canonical_request[] = implode( ';', array_keys( $headers ) );
+		# Payload
+		$canonical_request[] = $headers['x-amz-content-sha256'];
+		# Build canonical request
+		$canonical_request = implode( "\n", $canonical_request );
 
-		$signature = base64_encode(
-			hash_hmac('sha1', $string_to_sign, $secret_key, true)
-		);
+		# Part 2: String to sign
+		$string_to_sign = [];
+		# Algorithm
+		$string_to_sign[] = $algorithm;
+		# Date
+		$string_to_sign[] = $date->format( 'Ymd\THis\Z' );
+		# Credential scope
+		$scope = [
+			$date->format( 'Ymd' ),
+		];
+		$scope[] = $region;
+		$scope[] = $service;
+		$scope[] = 'aws4_request';
+		$string_to_sign[] = implode('/', $scope);
+		# Canonical request
+		$string_to_sign[] = hash($algorithm_name, $canonical_request);
+		# Build string to sign
+		$string_to_sign = implode("\n", $string_to_sign);
 
-		$this->headers['Authorization'] = "AWS $access_key:$signature";
+		# Part 3: Signature
+		$key_secret = 'AWS4' . $secret_key;
+		$key_date = hash_hmac($algorithm_name, $date->format('Ymd'), $key_secret, true);
+		$key_region = hash_hmac($algorithm_name, $region, $key_date, true);
+		$key_service = hash_hmac($algorithm_name, $service, $key_region, true);
+		$key_signing = hash_hmac($algorithm_name, 'aws4_request', $key_service, true);
+		# Build final signature
+		$signature = hash_hmac($algorithm_name, $string_to_sign, $key_signing);
 
+		# Part 4: Authorization header
+		$authorization = [
+			'Credential=' . $access_key . '/' . implode( '/', $scope ),
+			'SignedHeaders=' . implode( ';', array_keys( $headers ) ),
+			'Signature=' . $signature,
+		];
+		$authorization = $algorithm . ' ' . implode( ',', $authorization );
+
+		# Finally, add the header
+		$this->headers['Authorization'] = $authorization;
 		return $this;
+	}
+
+	/**
+	 * Get region
+	 * @param  string $endpoint Endpoint
+	 */
+	protected function getRegion(string $endpoint): string {
+		$region = '';
+		# Parse region from endpoint if not specific
+		if ( preg_match('/s3[.-](?:website-|dualstack\.)?(.+)\.amazonaws\.com/i', $endpoint, $match) !== 0 && strtolower($match[1]) !== 'external-1' ) {
+			$region = $match[1];
+		}
+		return empty($region) ? 'us-east-1' : $region;
 	}
 
 	/**

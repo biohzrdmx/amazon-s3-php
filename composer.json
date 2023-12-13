@@ -1,7 +1,7 @@
 {
     "name": "biohzrdmx/amazon-s3-php",
     "description": "A lightweight and fast S3 client for PHP.",
-    "version": "2.1",
+    "version": "2.2",
     "type": "library",
     "keywords": ["amazon", "aws", "s3"],
     "license": "MIT",
