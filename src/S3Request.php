@@ -312,25 +312,4 @@ class S3Request {
 
 		return $this->response;
 	}
-
-	/**
-	 * Get canonical Amazon headers
-	 * @return array
-	 */
-	private function getCanonicalAmzHeaders(): array {
-		$canonical_amz_headers = [];
-
-		foreach ($this->headers as $header => $value) {
-			$header = trim(strtolower($header));
-			$value = trim($value);
-
-			if (strpos($header, 'x-amz-') === 0) {
-				$canonical_amz_headers[$header] = "{$header}:{$value}";
-			}
-		}
-
-		ksort($canonical_amz_headers);
-
-		return $canonical_amz_headers;
-	}
 }
